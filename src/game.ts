@@ -49,7 +49,9 @@ export class Game {
       console.log(line);
       if (y == 0) console.log("#------#")
     }
-    console.log("########")
+    console.log("########");
+    let s = this.score.toString();
+    console.log(" " + "0".repeat(7 - s.length) + s);
   }
 
   run(agent: Agent) {
