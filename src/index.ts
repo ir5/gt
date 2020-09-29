@@ -1,5 +1,6 @@
 import {Act} from "./simulation"
 import {Game} from "./game"
+import {test} from "./bot"
 
 function main() {
   let pairs = new Int8Array(12);
@@ -13,4 +14,5 @@ function main() {
   game.run(dummy);
 }
 
-main();
+// main();
+test();
