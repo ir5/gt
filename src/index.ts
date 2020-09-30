@@ -4,7 +4,8 @@ import {gtrAgent} from "./bot"
 
 
 function main() {
-  let pairs = Int8Array.from([3,3,1,2,2,1,2,2,2,3,4,3,2,1,2,4,3,4,2,2,3,1]);
+  let pairs = new Int8Array(36);
+  for (let i = 0; i < 36; i++) pairs[i] = Math.floor(Math.random() * 4) + 1;
 
   let game = new Game(pairs);
 

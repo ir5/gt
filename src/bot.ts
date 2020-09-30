@@ -54,21 +54,138 @@ function computeHeightScore(field: Int8Array): number {
   return score;
 }
 
-const template = 
-  "......" +
-  "......" +
-  "......" +
-  "......" +
-  "......" +
-  "......" +
-  "......" +
-  "......" +
-  "......" +
-  "......" +
-  "YXZW.." +
-  "YYXZWW" +
-  "XXZZW.";
-const forbidden = "XYZXZW";
+function computeScore(field: Int8Array): number {
+  // hand tuned templates...
+  const TFs: [string, string][] = [
+    [
+      "......" +
+      "......" +
+      "......" +
+      "......" +
+      "......" +
+      "......" +
+      "......" +
+      "......" +
+      "......" +
+      "XYZ..5" +
+      "123455" +
+      "112344" +
+      "223345", "122334451X2Y3Z"
+    ],
+    [
+      "......" +
+      "......" +
+      "......" +
+      "......" +
+      "......" +
+      "......" +
+      "......" +
+      "......" +
+      "......" +
+      "XYZ5.." +
+      "123455" +
+      "112345" +
+      "223344", "122334451X2Y3Z"
+    ],
+    [
+      "......" +
+      "......" +
+      "......" +
+      "......" +
+      "......" +
+      "......" +
+      "......" +
+      "......" +
+      "......" +
+      "XYZ45." +
+      "12345." +
+      "112345" +
+      "223345", "122334451X2Y3Z"
+    ],
+    [
+      "......" +
+      "......" +
+      "......" +
+      "......" +
+      "......" +
+      "......" +
+      "......" +
+      "......" +
+      "......" +
+      "XYZ.5." +
+      "123545" +
+      "112335" +
+      "223444", "12233445351X2Y3Z"
+    ],
+    [
+      "......" +
+      "......" +
+      "......" +
+      "......" +
+      "......" +
+      "......" +
+      "......" +
+      "......" +
+      "......" +
+      "XYZ.55" +
+      "123545" +
+      "112333" +
+      "223444", "12233445351X2Y3Z"
+    ],
+    [
+      "......" +
+      "......" +
+      "......" +
+      "......" +
+      "......" +
+      "......" +
+      "......" +
+      "......" +
+      ".....5" +
+      "XYZ.55" +
+      "123544" +
+      "112333" +
+      "223444", "12233445351X2Y3Z"
+    ],
+    [
+      "......" +
+      "......" +
+      "......" +
+      "......" +
+      "......" +
+      "......" +
+      "......" +
+      "......" +
+      "......" +
+      "XYZ.5." +
+      "123545" +
+      "112334" +
+      "223544", "12233445351X2Y3Z"
+    ],
+    [
+      "......" +
+      "......" +
+      "......" +
+      "......" +
+      "......" +
+      "......" +
+      "......" +
+      "......" +
+      "......" +
+      "XYZ.5." +
+      "123445" +
+      "112334" +
+      "223545", "12233445351X2Y3Z"
+    ],
+  ];
+
+  let templateScore = -1e9;
+  for (let [template, forbidden] of TFs) {
+    templateScore = Math.max(templateScore, computeTemplateScore(field, template, forbidden));
+  }
+  let heightScore = computeHeightScore(field);
+  return templateScore + heightScore;
+}
 
 export function gtrAgent(field: Int8Array, pairs: Int8Array): Act {
 
@@ -79,7 +196,7 @@ export function gtrAgent(field: Int8Array, pairs: Int8Array): Act {
   function search(currField: Int8Array, turn: number) {
     const filled = currField.reduce((acc, curr) => (acc + (curr != 0 ? 1 : 0)), 0);
     if (filled >= 44 || turn == 3) {
-      const score = computeTemplateScore(currField, template, forbidden) + computeHeightScore(currField);
+      const score = computeScore(currField);
       if (actlist.length > 0) {
         if (score > bestScore) {
           bestAct = actlist[0];
