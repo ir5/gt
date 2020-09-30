@@ -102,3 +102,32 @@ export function simulateDrop(field: Int8Array, pair: Int8Array, act: Act): boole
   }
   return true;
 }
+
+export function simulateAll(field: Int8Array, pair: Int8Array, act: Act): number {
+  simulateDrop(field, pair, act);
+  let totalScore = 0;
+  for (let chain = 1; ; chain++) {
+    const score = simulateErase(field, chain);
+    if (score == 0) return totalScore;
+    totalScore += score;
+    simulateFall(field);
+  }
+}
+
+export function enumerateActs(pair: Int8Array): Act[] {
+  let ret: Act[] = [];
+  if (pair[0] == pair[1]) {
+    for (let x = 0; x < 6; x++) ret.push([x, 0]);
+    for (let x = 0; x < 5; x++) ret.push([x, 1]);
+  } else {
+    for (let x = 0; x < 6; x++) {
+      ret.push([x, 0]);
+      ret.push([x, 2]);
+    }
+    for (let x = 0; x < 5; x++) {
+      ret.push([x, 1]);
+      ret.push([x, 3]);
+    }
+  }
+  return ret;
+}
