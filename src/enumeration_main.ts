@@ -127,6 +127,60 @@ function enumerateChains(patterns: GroupPattern[], maxChain: number): Int8Array[
   return res;
 }
 
+function enumerateChains2(patterns: GroupPattern[], maxChain: number): Int8Array[] {
+  let res: Int8Array[] = [];
+  function search(field: Int8Array, chain: number) {
+    if (chain > maxChain) {
+      const heights = getHeights(field);
+      if (heights[1] - heights[0] > 1) return;
+      if (heights[1] - heights[2] > 2) return;
+      let y2 = 13 - heights[2];
+      if (field[y2 * 6 + 2] != maxChain + 3) return;
+      res.push(Int8Array.from(field));
+      return;
+    }
+
+    let savedField = [...field];
+    for (let pattern of patterns) {
+      for (let yoffset = 0; yoffset <= 9; yoffset++) {
+        let ok = true;
+        for (let ix = 0; ix < pattern.length; ix++) {
+          if (yoffset + pattern[ix][1] > 10) ok = false;
+        }
+        if (!ok) continue;
+
+        for (let xoffset = 0; xoffset + pattern.length <= 3; xoffset++) {
+          let nextField = checkLiftUp(field, xoffset, yoffset, pattern, chain + 3);
+          if (nextField) {
+            search(nextField, chain + 1);
+          }
+          field = Int8Array.from(savedField);
+        }
+      }
+    }
+  }
+
+  let fieldStr =
+      "000000" +
+      "000000" +
+      "000000" +
+      "000000" +
+      "000000" +
+      "000000" +
+      "000000" +
+      "000000" +
+      "000000" +
+      "300000" +
+      "321000" +
+      "332100" +
+      "221100";
+  let field = new Int8Array(fieldStr.length);
+  for (let i = 0; i < field.length; i++) field[i] = parseInt(fieldStr[i]);
+  search(field, 1);
+
+  return res;
+}
+
 function render(field: Int8Array): string[] {
   let lines: string[] = [];
 
@@ -169,7 +223,7 @@ console.log(patterns);
 // console.log(liftUp(field, 3, 12, pattern, 3));
 // render(field);
 
-const fieldList = enumerateChains(patterns, 5);
+const fieldList = enumerateChains2(patterns, 4);
 console.log(fieldList.length);
 
 const W = 16;
