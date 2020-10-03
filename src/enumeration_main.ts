@@ -26,6 +26,19 @@ function enumerateGroupPattern(heights: number[]): GroupPattern[] {
   return patterns;
 }
 
+function getHeights(field: Int8Array): number[] {
+  let heights = new Array<number>(6).fill(13);
+  for (let x = 0; x < 6; x++) {
+    for (let y = 12; y >= 0; y--) {
+      if (field[y * 6 + x] == 0) {
+        heights[x] = 12 - y;
+        break;
+      }
+    }
+  }
+  return heights;
+}
+
 function liftUp(field: Int8Array, xoffset: number, yoffset: number, pattern: GroupPattern, chain: number): boolean {
   for (let ix = 0; ix < pattern.length; ix++) {
     const x = ix + xoffset;
@@ -78,14 +91,29 @@ function enumerateChains(patterns: GroupPattern[], maxChain: number): Int8Array[
       res.push(Int8Array.from(field));
       return;
     }
+    if (chain == maxChain) {
+      // last chain should be constrained to be GTR's formation
+      let pattern: GroupPattern = [[0, 2], [0, 1], [0, 2]];
+      let nextField = checkLiftUp(field, 2, 11, pattern, chain);
+      if (nextField) {
+        // filtering rule?
+        const heights = getHeights(nextField);
+        if (heights[3] > heights[4]) return;
+        if (heights[4] - heights[3] > 2) return;
+        if (heights[4] > heights[5]) return;
+        if (heights[5] - heights[4] > 1) return;
+        res.push(nextField);
+      }
+      return;
+    }
+
     let savedField = [...field];
     for (let pattern of patterns) {
-      for (let yoffset = 0; yoffset <= 12; yoffset++) {
+      for (let yoffset = 11; yoffset <= 12; yoffset++) {
         for (let xoffset = 3; xoffset + pattern.length <= 6; xoffset++) {
-          let res = checkLiftUp(field, xoffset, yoffset, pattern, chain);
-          if (res) {
-            field = res;
-            search(field, chain + 1);
+          let nextField = checkLiftUp(field, xoffset, yoffset, pattern, chain);
+          if (nextField) {
+            search(nextField, chain + 1);
           }
           field = Int8Array.from(savedField);
         }
@@ -99,21 +127,23 @@ function enumerateChains(patterns: GroupPattern[], maxChain: number): Int8Array[
   return res;
 }
 
-function render(field: Int8Array) {
-  console.log("########")
-  for (let y = 0; y < 13; y++) {
+function render(field: Int8Array): string[] {
+  let lines: string[] = [];
+
+  const RESET = "\x1b[0m";
+  for (let y = 1; y <= 12; y++) {
     let line: string = "#";
     for (let x = 0; x < 6; x++) {
       let c = field[y * 6 + x];
-      if (c > 0) line += "" + c;
+      if (c > 0) line += "" + "\x1b[0;" + (40 + c) + "m" + c + RESET;
       else line += ".";
     }
     line += "#";
 
-    console.log(line);
-    if (y == 0) console.log("#------#")
+    lines.push(line);
   }
-  console.log("########");
+  lines.push("########");
+  return lines;
 }
 
 const heightsList = [
@@ -121,6 +151,7 @@ const heightsList = [
   [1, 2, 1],
   [2, 1, 1],
   [2, 2],
+  [1, 2, 2],
   [1, 3],
 ];
 let patterns: GroupPattern[] = [];
@@ -138,10 +169,26 @@ console.log(patterns);
 // console.log(liftUp(field, 3, 12, pattern, 3));
 // render(field);
 
-const fieldList = enumerateChains(patterns, 4);
+const fieldList = enumerateChains(patterns, 5);
 console.log(fieldList.length);
 
-for (const field of fieldList) {
-  render(field);
+const W = 16;
+for (let i = 0; i < fieldList.length; i++) {
+  let linesList: string[][] = [];
+  for (let j = 0; j < W; j++) {
+    if (i * W + j >= fieldList.length) break;
+    linesList.push(render(fieldList[i * W + j]));
+  }
+  if (linesList.length == 0) break;
+
+  for (let k = 0; k < linesList[0].length; k++) {
+    let line = "";
+    for (let j = 0; j < linesList.length; j++) {
+      line += linesList[j][k];
+      line += "  ";
+    }
+    console.log(line);
+  }
+  console.log("");
 }
 console.log(fieldList.length);
