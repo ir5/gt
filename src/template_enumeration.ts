@@ -122,6 +122,8 @@ export function enumerateTailChains(maxChain: number): Int8Array[] {
           if (heights[4] - heights[3] > 2) continue;
           if (heights[4] > heights[5]) continue;
           if (heights[5] - heights[4] > 1) continue;
+          nextField[11 * 6 + 2] = 0;
+          nextField[10 * 6 + 2] = chain;
           res.push(nextField);
         }
         field = Int8Array.from(savedField);

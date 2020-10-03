@@ -103,8 +103,8 @@ export function simulateDrop(field: Int8Array, pair: Int8Array, act: Act): boole
   return true;
 }
 
-export function simulateAll(field: Int8Array, pair: Int8Array, act: Act): number {
-  simulateDrop(field, pair, act);
+export function simulateAllWithoutAct(field: Int8Array): number {
+  simulateFall(field);
   let totalScore = 0;
   for (let chain = 1; ; chain++) {
     const score = simulateErase(field, chain);
@@ -112,6 +112,11 @@ export function simulateAll(field: Int8Array, pair: Int8Array, act: Act): number
     totalScore += score;
     simulateFall(field);
   }
+}
+
+export function simulateAll(field: Int8Array, pair: Int8Array, act: Act): number {
+  if (!simulateDrop(field, pair, act)) return -1;
+  return simulateAllWithoutAct(field);
 }
 
 export function enumerateActs(pair: Int8Array): Act[] {

@@ -1,19 +1,18 @@
 import {Act} from "./simulation"
 import {Game} from "./game"
-import {gtrAgent} from "./bot"
+import {getGTRAgent} from "./bot"
 
 
 function main() {
-  let pairs = new Int8Array(36);
-  for (let i = 0; i < 36; i++) pairs[i] = Math.floor(Math.random() * 4) + 1;
+  let pairs = new Int8Array(100);
+  for (let i = 0; i < 100; i++) pairs[i] = Math.floor(Math.random() * 4) + 1;
+  // let pairs = Int8Array.from([1, 1, 2, 2, 1, 1, 2, 2]);
 
   let game = new Game(pairs);
 
-  function dummy(field: Int8Array, pairs: Int8Array): Act {
-    return [0, 1];
-  }
+  let agent = getGTRAgent();
   // game.run(dummy);
-  game.run(gtrAgent);
+  game.run(agent);
 }
 
 main();
