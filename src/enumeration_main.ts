@@ -1,4 +1,4 @@
-import {simulateDrop} from "./simulation"
+import {simulateFall, simulateErase} from "./simulation"
 import {default as isEqual} from "lodash.isequal"
 
 type GroupPattern = [number, number][];  // [top, bottom]
@@ -56,10 +56,47 @@ function liftUp(field: Int8Array, xoffset: number, yoffset: number, pattern: Gro
   return true;
 }
 
+function checkLiftUp(field: Int8Array, xoffset: number, yoffset: number, pattern: GroupPattern, chain: number): Int8Array {
+  const fieldBeforeLiftUp = Int8Array.from(field);
+  if (!liftUp(field, xoffset, yoffset, pattern, chain)) return null;
+  const fieldAfterLiftUp = Int8Array.from(field);
+  simulateFall(field);
+  const fieldAfterFall = Int8Array.from(field);
+  if (!isEqual(fieldAfterFall, fieldAfterLiftUp)) return null;
+
+  simulateErase(field, 1);
+  simulateFall(field);
+  if (!isEqual(field, fieldBeforeLiftUp)) return null;
+
+  return fieldAfterLiftUp; // true;
+}
+
 function enumerateChains(patterns: GroupPattern[], maxChain: number): Int8Array[] {
-  function search(now: Int8Array) {
+  let res: Int8Array[] = [];
+  function search(field: Int8Array, chain: number) {
+    if (chain > maxChain) {
+      res.push(Int8Array.from(field));
+      return;
+    }
+    let savedField = [...field];
+    for (let pattern of patterns) {
+      for (let yoffset = 0; yoffset <= 12; yoffset++) {
+        for (let xoffset = 3; xoffset + pattern.length <= 6; xoffset++) {
+          let res = checkLiftUp(field, xoffset, yoffset, pattern, chain);
+          if (res) {
+            field = res;
+            search(field, chain + 1);
+          }
+          field = Int8Array.from(savedField);
+        }
+      }
+    }
   }
-  return null;
+
+  let field = new Int8Array(13 * 6);
+  search(field, 1);
+
+  return res;
 }
 
 function render(field: Int8Array) {
@@ -79,13 +116,32 @@ function render(field: Int8Array) {
   console.log("########");
 }
 
-let patterns = enumerateGroupPattern([2, 3]);
+const heightsList = [
+  [1, 1, 2],
+  [1, 2, 1],
+  [2, 1, 1],
+  [2, 2],
+  [1, 3],
+];
+let patterns: GroupPattern[] = [];
+for (const heights of heightsList) {
+  console.log(heights);
+  patterns = patterns.concat(enumerateGroupPattern(heights));
+}
 console.log(patterns);
 
-let field = new Int8Array(13 * 6);
+// let field = new Int8Array(13 * 6);
+// let pattern: GroupPattern = [[0, 1], [0, 1], [-1, 1]];
+// 
+// console.log(liftUp(field, 3, 12, pattern, 1));
+// console.log(liftUp(field, 3, 12, pattern, 2));
+// console.log(liftUp(field, 3, 12, pattern, 3));
+// render(field);
 
-let pattern: GroupPattern = [[0, 2], [0, 2]];
+const fieldList = enumerateChains(patterns, 4);
+console.log(fieldList.length);
 
-console.log(liftUp(field, 3, 11, pattern, 1));
-console.log(liftUp(field, 3, 10, pattern, 2));
-render(field);
+for (const field of fieldList) {
+  render(field);
+}
+console.log(fieldList.length);
