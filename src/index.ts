@@ -1,6 +1,6 @@
 import {Act} from "./simulation"
 import {Game} from "./game"
-import {getGTRAgent} from "./bot"
+import {getMCBAgent} from "./bot_mcb"
 
 
 function main() {
@@ -10,8 +10,7 @@ function main() {
 
   let game = new Game(pairs);
 
-  let agent = getGTRAgent();
-  // game.run(dummy);
+  let agent = getMCBAgent(40, 30);
   game.run(agent);
 }
 
