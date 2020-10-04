@@ -43,56 +43,65 @@ export function getMCBAgent(beamWidth: number, beamDepth: number): (field: Int8A
   function agentImpl(field: Int8Array, pairs: Int8Array) {
 
     // extend the pairs array
-    let ext = new Int8Array(beamDepth * 2 + 6);
-    for (let i = 0; i < beamDepth * 2 + 6; i++) ext[i] = Math.floor(Math.random() * 4) + 1;
-    pairs = Int8Array.from([...pairs, ...ext]);
-
     const actsFirst = enumerateActs(pairs.slice(0, 2));
+    let scoreSum = new Array<number>(actsFirst.length).fill(0);
+
+    for (let miter = 0; miter < 10; miter++) {
+      let ext = new Int8Array(beamDepth * 2 + 6);
+      for (let i = 0; i < beamDepth * 2 + 6; i++) ext[i] = Math.floor(Math.random() * 4) + 1;
+      const extPairs = Int8Array.from([...pairs, ...ext]);
+
+      for (let actIndex = 0; actIndex < actsFirst.length; actIndex++) {
+        const actFirst = actsFirst[actIndex];
+        // perform beam search to compute the score of this action
+        let candidateScore = -1e9;
+
+        let cands: Int8Array[] = [Int8Array.from(field)];
+        for (let iter = 0; iter < beamDepth; iter++) {
+          const pair = extPairs.slice(iter * 2, iter * 2 + 2);
+          const actList = (iter == 0) ? [actFirst] : enumerateActs(pair);
+
+          let nextFieldList: Int8Array[] = [];
+          let scoreList: [number, number, boolean][] = [];  // [score, reference index to nextFieldList, terminal]
+
+          for (const cand of cands) {
+            for (const act of actList) {
+              let nextField = Int8Array.from(cand);
+              const gainedScore = simulateAll(nextField, pair, act);
+              if (gainedScore < 0) continue;
+
+              let evalScore = evaluate(nextField, gainedScore);
+              if (iter <= 1 && gainedScore > 50000) evalScore += 1e7;
+              nextFieldList.push(nextField);
+              const terminal = gainedScore > 0;
+              scoreList.push([evalScore, scoreList.length, terminal]);
+            }
+          }
+
+          // take top candidates
+          scoreList.sort((a, b) => b[0] - a[0]);
+          let nextCands = [];
+          for (let i = 0; i < Math.min(beamWidth, scoreList.length); i++) {
+            if (scoreList[i][2]) continue;  // terminal
+            const idx = scoreList[i][1];
+            nextCands.push(nextFieldList[idx]);
+          }
+          if (scoreList.length > 0) {
+            candidateScore = Math.max(candidateScore, scoreList[0][0]);
+          }
+          cands = nextCands;
+        }
+
+        scoreSum[actIndex] += candidateScore;
+      }
+    }
+    console.log(scoreSum);
     let bestScore = -1e9;
     let bestAct: Act = null;
-    for (const actFirst of actsFirst) {
-      // perform beam search to compute the score of this action
-      let candidateScore = -1e9;
-
-      let cands: Int8Array[] = [Int8Array.from(field)];
-      for (let iter = 0; iter < beamDepth; iter++) {
-        const pair = pairs.slice(iter * 2, iter * 2 + 2);
-        const actList = (iter == 0) ? [actFirst] : enumerateActs(pair);
-
-        let nextFieldList: Int8Array[] = [];
-        let scoreList: [number, number, boolean][] = [];  // [score, reference index to nextFieldList, terminal]
-
-        for (const cand of cands) {
-          for (const act of actList) {
-            let nextField = Int8Array.from(cand);
-            const gainedScore = simulateAll(nextField, pair, act);
-            if (gainedScore < 0) continue;
-
-            let evalScore = evaluate(nextField, gainedScore);
-            if (iter <= 1 && gainedScore > 50000) evalScore += 1e7;
-            nextFieldList.push(nextField);
-            const terminal = gainedScore > 0;
-            scoreList.push([evalScore, scoreList.length, terminal]);
-          }
-        }
-
-        // take top candidates
-        scoreList.sort((a, b) => b[0] - a[0]);
-        let nextCands = [];
-        for (let i = 0; i < Math.min(beamWidth, scoreList.length); i++) {
-          if (scoreList[i][2]) continue;  // terminal
-          const idx = scoreList[i][1];
-          nextCands.push(nextFieldList[idx]);
-        }
-        if (scoreList.length > 0) {
-          candidateScore = Math.max(candidateScore, scoreList[0][0]);
-        }
-        cands = nextCands;
-      }
-
-      if (candidateScore > bestScore) {
-        bestScore = candidateScore;
-        bestAct = actFirst;
+    for (let i = 0; i < scoreSum.length; i++) {
+      if (bestScore < scoreSum[i]) {
+        bestScore = scoreSum[i];
+        bestAct = actsFirst[i];
       }
     }
     console.log(bestScore);
