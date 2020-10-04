@@ -10,6 +10,22 @@ export class Game {
 
   constructor(pairs: Int8Array) {
     this.field = new Int8Array(13 * 6);
+    this.field = Int8Array.from(
+      [
+        0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 2, 0,
+        2, 1, 3, 2, 4, 2,
+        2, 2, 1, 3, 3, 2,
+        1, 1, 3, 4, 4, 4,
+      ]);
     this.score = 0;
     this.turn = 0;
     this.pairs = pairs;

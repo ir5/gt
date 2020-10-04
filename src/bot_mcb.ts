@@ -1,9 +1,30 @@
 // monte carlo + beam search
 import {Act, simulateAll, simulateAllWithoutAct, enumerateActs} from "./simulation"
 
+const G1 = [[12, 0], [12, 1], [11, 2], [10, 1]];
+const G2 = [[11, 0], [11, 1], [10, 0]];
+const G3 = [[12, 2], [11, 3], [11, 4], [10, 2]];
 function evaluate(field: Int8Array, gainedScore: number) {
-  // TODO: improve
   return gainedScore;
+
+  /*
+
+  // GTR score
+  let matched = 0;
+  for (const Gs of [G1, G2, G3]) {
+    let common = 0;
+    for (const [y, x] of Gs) {
+      const c = field[y * 6 + x];
+      if (c == 0) continue;
+      if (common == 0) common = c;
+      if (common != c) matched -= 100;
+      matched++;
+    }
+  }
+  const matchScore = 0; // Math.max(0, matched) * 1000000;
+
+  return matchScore + gainedScore;
+  */
 }
 
 
@@ -28,30 +49,33 @@ export function getMCBAgent(beamWidth: number, beamDepth: number): (field: Int8A
         const actList = (iter == 0) ? [actFirst] : enumerateActs(pair);
 
         let nextFieldList: Int8Array[] = [];
-        let scoreList: [number, number][] = [];  // [score, reference index to nextFieldList]
+        let scoreList: [number, number, boolean][] = [];  // [score, reference index to nextFieldList, terminal]
 
         for (const cand of cands) {
           for (const act of actList) {
             let nextField = Int8Array.from(cand);
-            let gainedScore = simulateAll(nextField, pair, act);
+            const gainedScore = simulateAll(nextField, pair, act);
             if (gainedScore < 0) continue;
 
-            let evalScore = evaluate(nextField, gainedScore);
+            const evalScore = evaluate(cand, gainedScore);
             nextFieldList.push(nextField);
-            scoreList.push([evalScore, scoreList.length]);
+            const terminal = gainedScore > 0;
+            scoreList.push([evalScore, scoreList.length, terminal]);
           }
         }
 
         // take top candidates
         scoreList.sort((a, b) => b[0] - a[0]);
-        cands = [];
+        let nextCands = [];
         for (let i = 0; i < Math.min(beamWidth, scoreList.length); i++) {
+          // if (scoreList[i][2]) continue;  // terminal
           const idx = scoreList[i][1];
-          cands.push(nextFieldList[idx]);
+          nextCands.push(nextFieldList[idx]);
         }
         if (scoreList.length > 0) {
           candidateScore = Math.max(candidateScore, scoreList[0][0]);
         }
+        cands = nextCands;
       }
 
       if (candidateScore > bestScore) {
