@@ -100,6 +100,8 @@ export function simulateDrop(field: Int8Array, pair: Int8Array, act: Act): boole
     field[0 * 6 + pos + 1] = b;
     simulateFall(field);
   }
+  if (field[1 * 6 + 2] > 0) return false;  // died
+
   return true;
 }
 
