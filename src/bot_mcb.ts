@@ -5,7 +5,19 @@ const G1 = [[12, 0], [12, 1], [11, 2], [10, 1]];
 const G2 = [[11, 0], [11, 1], [10, 0]];
 const G3 = [[12, 2], [11, 3], [11, 4], [10, 2]];
 function evaluate(field: Int8Array, gainedScore: number) {
-  return gainedScore;
+  let maxScore = 0;
+  for (let color = 1; color <= 4; color++) {
+    for (let x = 0; x < 6; x++) {
+      if (field[1 * 6 + x] > 0) continue;
+      let copyField = Int8Array.from(field);
+      copyField[1 * 6 + x] = color;
+      copyField[0 * 6 + x] = color;
+      let currScore = simulateAllWithoutAct(copyField);
+      maxScore = Math.max(currScore, maxScore);
+    }
+  }
+  return maxScore;
+  // return gainedScore;
 
   /*
 
@@ -57,7 +69,7 @@ export function getMCBAgent(beamWidth: number, beamDepth: number): (field: Int8A
             const gainedScore = simulateAll(nextField, pair, act);
             if (gainedScore < 0) continue;
 
-            const evalScore = evaluate(cand, gainedScore);
+            const evalScore = evaluate(nextField, gainedScore);
             nextFieldList.push(nextField);
             const terminal = gainedScore > 0;
             scoreList.push([evalScore, scoreList.length, terminal]);
@@ -68,7 +80,7 @@ export function getMCBAgent(beamWidth: number, beamDepth: number): (field: Int8A
         scoreList.sort((a, b) => b[0] - a[0]);
         let nextCands = [];
         for (let i = 0; i < Math.min(beamWidth, scoreList.length); i++) {
-          // if (scoreList[i][2]) continue;  // terminal
+          if (scoreList[i][2]) continue;  // terminal
           const idx = scoreList[i][1];
           nextCands.push(nextFieldList[idx]);
         }

@@ -10,7 +10,7 @@ function main() {
 
   let game = new Game(pairs);
 
-  let agent = getMCBAgent(100, 20);
+  let agent = getMCBAgent(40, 20);
   game.run(agent);
 }
 
