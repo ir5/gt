@@ -11,7 +11,6 @@ function evaluate(field: Int8Array, gainedScore: number) {
       if (field[1 * 6 + x] > 0) continue;
       let copyField = Int8Array.from(field);
       copyField[1 * 6 + x] = color;
-      copyField[0 * 6 + x] = color;
       let currScore = simulateAllWithoutAct(copyField);
       maxScore = Math.max(currScore, maxScore);
     }
@@ -69,7 +68,8 @@ export function getMCBAgent(beamWidth: number, beamDepth: number): (field: Int8A
             const gainedScore = simulateAll(nextField, pair, act);
             if (gainedScore < 0) continue;
 
-            const evalScore = evaluate(nextField, gainedScore);
+            let evalScore = evaluate(nextField, gainedScore);
+            if (iter <= 1 && gainedScore > 50000) evalScore += 1e7;
             nextFieldList.push(nextField);
             const terminal = gainedScore > 0;
             scoreList.push([evalScore, scoreList.length, terminal]);
